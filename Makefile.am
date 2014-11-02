@@ -54,6 +54,7 @@ easytag_SOURCES = \
 	src/log.c \
 	src/main.c \
 	src/misc.c \
+	src/musicbrainz_dialog.c \
 	src/picture.c \
 	src/playlist_dialog.c \
 	src/preferences_dialog.c \
@@ -106,6 +107,7 @@ easytag_headers = \
 	src/load_files_dialog.h \
 	src/log.h \
 	src/misc.h \
+	src/musicbrainz_dialog.h \
 	src/picture.h \
 	src/playlist_dialog.h \
 	src/preferences_dialog.h \
