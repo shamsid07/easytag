@@ -159,6 +159,8 @@ AC_ARG_ENABLE([wavpack],
 AC_ARG_ENABLE([nautilus_actions],
               [AS_HELP_STRING([--disable-nautilus-actions], [do not build the nautilus context menu actions (default=auto)])])
 
+AC_ARG_ENABLE([musicbrainz],
+              [AS_HELP_STRING([--disable-musicbrainz], [do not build MusicBrainz query support (default=auto)])])
 
 
 dnl -------------------------------
@@ -326,12 +328,27 @@ AS_IF([test "x$have_libnautilus_extension" = "xno"],
 
 AM_CONDITIONAL([ENABLE_NAUTILUS_ACTIONS], [test x"$have_libnautilus_extension" != x"no"])
 
+dnl ################################################
+dnl # MusicBrainz
+dnl ################################################
+dnl libmusicbrainz5
+MUSICBRAINZ_DEPS="libmusicbrainz5 >= 5.0"
+AS_IF([test "x$enable_musicbrainz" != "xno"],
+      [PKG_CHECK_EXISTS([$MUSICBRAINZ_DEPS], [have_musicbrainz=yes], [have_musicbrainz=no])],
+      [have_musicbrainz=no])
+
+AS_IF([test "x$have_musicbrainz" != "xno"],
+      [AC_DEFINE([ENABLE_MUSICBRAINZ], [], [Define for MusicBrainz support])],
+      [MUSICBRAINZ_DEPS=""
+       AS_IF([test "x$enable_musicbrainz" = "xyes"],
+             [AC_MSG_ERROR([musicbrainz support requested but required dependencies ($MUSICBRAINZ_DEPS) not found])])])
+
 dnl Check the pkg-config dependencies
 GIO_DEPS="gio-2.0 >= 2.32.0" dnl For g_file_new_tmp()
 GLIB_DEPRECATION_FLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32 -DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_32"
 GTK_DEPS="gtk+-3.0 >= 3.4.0"
 GTK_DEPRECATION_FLAGS="-DGDK_VERSION_MIN_REQUIRED=GDK_VERSION_3_4 -DGDK_VERSION_MAX_ALLOWED=GDK_VERSION_3_4"
-PKG_CHECK_MODULES([EASYTAG], [$GIO_DEPS $GTK_DEPS $OPUS_DEPS $OGG_DEPS $SPEEX_DEPS $FLAC_DEPS $ID3TAG_DEPS $TAGLIB_DEPS $WAVPACK_DEPS])
+PKG_CHECK_MODULES([EASYTAG], [$GIO_DEPS $GTK_DEPS $OPUS_DEPS $OGG_DEPS $SPEEX_DEPS $FLAC_DEPS $ID3TAG_DEPS $TAGLIB_DEPS $MUSICBRAINZ_DEPS $WAVPACK_DEPS])
 
 dnl Check for winsock
 AC_SEARCH_LIBS([gethostbyname], [nsl socket], [],
@@ -421,6 +438,7 @@ echo FLAC file support .......: $have_flac
 echo MP4 file support ........: $have_taglib
 echo WavPack support .........: $have_wavpack
 echo NLS/gettext .............: $USE_NLS
+echo MusicBrainz search ......: $have_musicbrainz
 echo Nautilus actions ........: $have_libnautilus_extension
 echo Tests during make check .: $testing_utilities
 echo Install prefix ..........: $prefix

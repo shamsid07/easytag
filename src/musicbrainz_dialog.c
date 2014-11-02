@@ -19,9 +19,13 @@
 
 #include "config.h"
 
+#ifdef ENABLE_MUSICBRAINZ
+
 #include "musicbrainz_dialog.h"
 
 #include <glib/gi18n.h>
+
+#include "musicbrainz.h"
 
 /* TODO: Use G_DEFINE_TYPE_WITH_PRIVATE. */
 G_DEFINE_TYPE (EtMusicbrainzDialog, et_musicbrainz_dialog, GTK_TYPE_DIALOG)
@@ -32,7 +36,7 @@ static guint BOX_SPACING = 6;
 
 struct _EtMusicbrainzDialogPrivate
 {
-    gpointer unused;
+    EtMusicbrainz *mb;
 };
 
 static void
@@ -74,10 +78,29 @@ create_musicbrainz_dialog (EtMusicbrainzDialog *self)
 }
 
 static void
+et_musicbrainz_dialog_finalize (GObject *object)
+{
+    EtMusicbrainzDialog *self;
+    EtMusicbrainzDialogPrivate *priv;
+
+    self = ET_MUSICBRAINZ_DIALOG (object);
+    priv = et_musicbrainz_dialog_get_instance_private (self);
+
+    g_clear_object (&priv->mb);
+
+    G_OBJECT_CLASS (et_musicbrainz_dialog_parent_class)->finalize (object);
+}
+
+static void
 et_musicbrainz_dialog_init (EtMusicbrainzDialog *self)
 {
-    self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, ET_TYPE_MUSICBRAINZ_DIALOG,
-                                              EtMusicbrainzDialogPrivate);
+    EtMusicbrainzDialogPrivate *priv;
+
+    priv = self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
+                                                     ET_TYPE_MUSICBRAINZ_DIALOG,
+                                                     EtMusicbrainzDialogPrivate);
+
+    priv->mb = et_musicbrainz_new ();
 
     create_musicbrainz_dialog (self);
 }
@@ -85,6 +108,12 @@ et_musicbrainz_dialog_init (EtMusicbrainzDialog *self)
 static void
 et_musicbrainz_dialog_class_init (EtMusicbrainzDialogClass *klass)
 {
+    GObjectClass *gobject_class;
+
+    gobject_class = G_OBJECT_CLASS (klass);
+
+    gobject_class->finalize = et_musicbrainz_dialog_finalize;
+
     g_type_class_add_private (klass, sizeof (EtMusicbrainzDialogPrivate));
 }
 
@@ -103,3 +132,5 @@ et_musicbrainz_dialog_new (GtkWindow *parent)
     return g_object_new (ET_TYPE_MUSICBRAINZ_DIALOG, "transient-for", parent,
                          NULL);
 }
+
+#endif /* ENABLE_MUSICBRAINZ */
