@@ -18,6 +18,8 @@
 
 #include "misc.h"
 
+#include <glib/gstdio.h>
+
 static void
 misc_convert_duration (void)
 {
@@ -48,12 +50,87 @@ misc_convert_duration (void)
     }
 }
 
+static void
+misc_rename_file (void)
+{
+    gchar *filename1;
+    gchar *filename2;
+    gchar *filename3;
+    gchar *basename;
+    gchar *basename_upper;
+    gchar *dirname;
+    gint fd1;
+    gint fd2;
+    gint fd3;
+    GError *error1 = NULL;
+    GError *error2 = NULL;
+    GError *error3 = NULL;
+
+    fd1 = g_file_open_tmp ("EasyTAG-test1.XXXXXX", &filename1, &error1);
+    fd2 = g_file_open_tmp ("EasyTAG-test2.XXXXXX", &filename2, &error2);
+    g_assert_no_error (error1);
+    g_assert_no_error (error2);
+
+    close (fd1);
+    close (fd2);
+
+    /* Renaming to an existing filename should fail. */
+    et_rename_file (filename1, filename2, &error1);
+    et_rename_file (filename2, filename1, &error2);
+    g_assert_error (error1, G_IO_ERROR, G_IO_ERROR_EXISTS);
+    g_assert_error (error2, G_IO_ERROR, G_IO_ERROR_EXISTS);
+
+    g_clear_error (&error1);
+    g_clear_error (&error2);
+
+    fd3 = g_file_open_tmp ("EasyTAG-test3.XXXXXX", &filename3, &error3);
+    g_assert_no_error (error3);
+
+    close (fd3);
+
+    g_assert_cmpint (g_unlink (filename3), ==, 0);
+
+    g_assert_cmpint (g_rename (filename2, filename3), ==, 0);
+
+    /* Renaming to a new filename should succeed. */
+    et_rename_file (filename1, filename2, &error1);
+    et_rename_file (filename2, filename1, &error2);
+    g_assert_no_error (error1);
+    g_assert_no_error (error2);
+
+    g_assert_cmpint (g_unlink (filename1), ==, 0);
+
+    g_free (filename1);
+    g_free (filename2);
+
+    basename = g_path_get_basename (filename3);
+    dirname = g_path_get_dirname (filename3);
+
+    basename_upper = g_ascii_strup (basename, -1);
+    g_free (basename);
+
+    filename2 = g_build_filename (dirname, basename_upper, NULL);
+    g_free (basename_upper);
+    g_free (dirname);
+
+    /* Renaming to a new filename, differing only by case, should succeed, even
+     * in the case of a case-insensitive filesystem. */
+    et_rename_file (filename3, filename2, &error3);
+    g_assert_no_error (error3);
+
+    g_assert_cmpint (g_unlink (filename2), ==, 0);
+
+    g_free (filename2);
+    g_free (filename3);
+}
+
 int
 main (int argc, char** argv)
 {
     g_test_init (&argc, &argv, NULL);
 
     g_test_add_func ("/misc/convert-duration", misc_convert_duration);
+    g_test_add_func ("/misc/rename-file", misc_rename_file);
 
     return g_test_run ();
 }
