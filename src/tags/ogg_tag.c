@@ -1004,16 +1004,11 @@ ogg_tag_write_file_tag (const ET_File *ETFile,
         if (format != PICTURE_FORMAT_PNG && format != PICTURE_FORMAT_JPEG)
         {
             GdkPixbufLoader *loader;
-            gconstpointer data;
-            gsize data_size;
             GError *error = NULL;
 
             loader = gdk_pixbuf_loader_new ();
 
-            data = g_bytes_get_data (pic->bytes, &data_size);
-
-            /* TODO: Use gdk_pixbuf_loader_write_bytes() */
-            if (!gdk_pixbuf_loader_write (loader, data, data_size, &error))
+            if (!gdk_pixbuf_loader_write_bytes (loader, pic->bytes, &error))
             {
                 g_debug ("Error parsing image data: %s", error->message);
                 g_error_free (error);
