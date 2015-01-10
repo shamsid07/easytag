@@ -253,12 +253,10 @@ mp4tag_write_file_tag (const ET_File *ETFile,
 
     if (!stream.isOpen ())
     {
-        gchar *filename_utf8 = filename_to_display (filename);
         const GError *tmp_error = stream.getError ();
         g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
                      _("Error while opening file ‘%s’: %s"), filename_utf8,
                      tmp_error->message);
-        g_free (filename_utf8);
         return FALSE;
     }
 
@@ -289,10 +287,8 @@ mp4tag_write_file_tag (const ET_File *ETFile,
 
     if (!(tag = mp4file.tag ()))
     {
-        gchar *filename_utf8 = filename_to_display (filename);
         g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
                      _("Error reading tags from file ‘%s’"), filename_utf8);
-        g_free (filename_utf8);
         return FALSE;
     }
 

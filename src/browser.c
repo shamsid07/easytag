@@ -896,7 +896,7 @@ Browser_Tree_Node_Selected (EtBrowser *self, GtkTreeSelection *selection)
     et_browser_set_current_path (self, pathName);
 
     /* Display the selected path into the BrowserEntry */
-    pathName_utf8 = filename_to_display(pathName);
+    pathName_utf8 = g_filename_display_name (pathName);
     gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(priv->entry_combo))), pathName_utf8);
 
     /* Start to read the directory */
@@ -3200,7 +3200,6 @@ Browser_Tree_Rename_Directory (EtBrowser *self,
     GtkTreeIter  iter;
     GtkTreePath *childpath;
     GtkTreePath *parentpath;
-    gchar *new_basename;
     gchar *new_basename_utf8;
     gchar *path;
 
@@ -3240,7 +3239,7 @@ Browser_Tree_Rename_Directory (EtBrowser *self,
         if (childpath == NULL)
         {
             // ERROR! Could not find it!
-            gchar *text_utf8 = filename_to_display(textsplit[i]);
+            gchar *text_utf8 = g_filename_display_name (textsplit[i]);
             g_critical ("Error: Searching for %s, could not find node %s in tree.",
                         last_path, text_utf8);
             g_strfreev(textsplit);
@@ -3255,8 +3254,7 @@ Browser_Tree_Rename_Directory (EtBrowser *self,
     gtk_tree_path_free(parentpath);
 
     /* Rename the on-screen node */
-    new_basename = g_path_get_basename(new_path);
-    new_basename_utf8 = filename_to_display(new_basename);
+    new_basename_utf8 = g_filename_display_basename (new_path);
     gtk_tree_store_set(priv->directory_model, &iter,
                        TREE_COLUMN_DIR_NAME,  new_basename_utf8,
                        TREE_COLUMN_FULL_PATH, new_path,
@@ -3271,7 +3269,6 @@ Browser_Tree_Rename_Directory (EtBrowser *self,
     g_free(path);
 
     g_strfreev(textsplit);
-    g_free(new_basename);
     g_free(new_basename_utf8);
 }
 
@@ -3802,7 +3799,7 @@ open_file_selection_dialog (GtkWidget *entry,
     if (response == GTK_RESPONSE_ACCEPT)
     {
         filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-        filename_utf8 = filename_to_display (filename);
+        filename_utf8 = g_filename_display_name (filename);
         gtk_entry_set_text (GTK_ENTRY (entry), filename_utf8);
         g_free (filename);
         g_free (filename_utf8);
@@ -4179,7 +4176,8 @@ et_browser_show_rename_directory_dialog (EtBrowser *self)
         return;
     }
 
-    directory_name_utf8 = filename_to_display(directory_name);
+    /* FIXME: Use g_filename_display_basename()? */
+    directory_name_utf8 = g_filename_display_name (directory_name);
 
     builder = gtk_builder_new ();
     gtk_builder_add_from_resource (builder,
@@ -4391,9 +4389,9 @@ Rename_Directory (EtBrowser *self)
 
     /* Build the current and new absolute paths */
     last_path = g_strconcat(directory_parent, directory_last_name, NULL);
-    last_path_utf8 = filename_to_display(last_path);
+    last_path_utf8 = g_filename_display_name (last_path);
     new_path = g_strconcat(directory_parent, directory_new_name_file, NULL);
-    new_path_utf8 = filename_to_display(new_path);
+    new_path_utf8 = g_filename_display_name (new_path);
 
     /* TODO: Replace with g_open_dir() (or more likely g_file_move()). */
     /* Check if the new directory name doesn't already exists, and detect if
@@ -4460,7 +4458,7 @@ Rename_Directory (EtBrowser *self)
 
     /* Temporary path (useful when changing only string case) */
     tmp_path = g_strdup_printf("%s.XXXXXX",last_path);
-    tmp_path_utf8 = filename_to_display(tmp_path);
+    tmp_path_utf8 = g_filename_display_name (tmp_path);
 
     if ( (fd_tmp = mkstemp(tmp_path)) >= 0 )
     {
@@ -4536,9 +4534,9 @@ Rename_Directory (EtBrowser *self)
         ET_Display_File_Data_To_UI(ETCore->ETFileDisplayed);
     }else
     {
-        gchar *tmp = filename_to_display (et_browser_get_current_path (self));
+        gchar *tmp = g_filename_display_name (et_browser_get_current_path (self));
         et_browser_entry_set_text (self, tmp);
-        g_free(tmp);
+        g_free (tmp);
     }
 
     Destroy_Rename_Directory_Window (self);
